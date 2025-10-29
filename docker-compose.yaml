@@ -1,0 +1,18 @@
+
+services:
+  frontend:
+    build: ./my-react-app
+    container_name: frontend_c
+    ports:
+      - '3000:80'
+  backend:
+    build: ./backend
+    container_name: backend_c
+    ports:
+      - '4000:4000'
+    stdin_open: true
+    tty: true
+    volumes:
+      - ./backend:/app
+    command: node index.js  
+  
