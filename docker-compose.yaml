@@ -1,18 +1,42 @@
-
 services:
   frontend:
     build: ./my-react-app
     container_name: frontend_c
+    # map host 3000 to container 3000 for react dev server
     ports:
-      - '3000:80'
+      - '3000:3000'
+    volumes:
+      - ./my-react-app:/app:rw
+      - /app/node_modules
+    working_dir: /app
+    command: ["npm","start"]
+    environment:
+      # point to the backend container by service name
+      - REACT_APP_API_URL=http://backend:4000
+    depends_on:
+      - backend
   backend:
     build: ./backend
     container_name: backend_c
     ports:
       - '4000:4000'
-    stdin_open: true
-    tty: true
     volumes:
       - ./backend:/app
-    command: node index.js  
-  
+      - /app/node_modules
+    working_dir: /app
+    command: ["npm", "start"]
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/devops
+      - JWT_SECRET=your_jwt_secret
+    depends_on:
+      - mongo
+
+  mongo:
+    image: mongo:latest
+    container_name: mongo_c
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongo-data:/data/db
+volumes:
+  mongo-data:
