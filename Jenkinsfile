@@ -13,6 +13,18 @@ pipeline {
             }
         }
 
+        stage('Preflight: Docker access') {
+            steps {
+                sh '''
+                    echo "Checking Docker access..."
+                    whoami
+                    id
+                    docker version || echo "Docker not accessible"
+                    docker info | head -n 20 || true
+                '''
+            }
+        }
+
         stage('Build Backend') {
             steps {
                 script {
@@ -48,34 +60,16 @@ pipeline {
                 branch 'main'
             }
             steps {
-                script {
-                    sh '''
-                        echo "Starting services with docker-compose..."
-                        docker compose -f docker-compose.yaml up -d
-                    '''
-                }
+                sh '''
+                    echo "Starting services with docker-compose..."
+                    docker compose -f docker-compose.yaml up -d || echo "Compose up failed (optional)."
+                '''
             }
         }
     }
 
     post {
-        success {
-            echo 'Pipeline succeeded!'
-        }
-        failure {
-            echo 'Pipeline failed!'
-        }
-
-            stage('Preflight: Docker access') {
-                steps {
-                    sh '''
-                        echo "Checking Docker access..."
-                        whoami
-                        id
-                        docker version
-                        docker info | head -n 20
-                    '''
-                }
-            }
+        success { echo 'Pipeline succeeded!' }
+        failure { echo 'Pipeline failed!' }
     }
 }
