@@ -25,17 +25,6 @@ pipeline {
             }
         }
 
-        stage('Preflight: Docker access') {
-            steps {
-                sh '''
-                    echo "Checking Docker access..."
-                    whoami
-                    id
-                    docker version || echo "Docker not accessible"
-                    docker info | head -n 20 || true
-                '''
-            }
-        }
 
         stage('Build Backend') {
             steps {
