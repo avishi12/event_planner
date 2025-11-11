@@ -65,5 +65,17 @@ pipeline {
         failure {
             echo 'Pipeline failed!'
         }
+
+            stage('Preflight: Docker access') {
+                steps {
+                    sh '''
+                        echo "Checking Docker access..."
+                        whoami
+                        id
+                        docker version
+                        docker info | head -n 20
+                    '''
+                }
+            }
     }
 }
