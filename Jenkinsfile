@@ -1,78 +1,70 @@
 pipeline {
-  agent any
+    agent any
 
-  tools {
-    nodejs 'NodeJS'  // Adjust this name to match your Jenkins NodeJS tool installation
-  }
-
-  stages {
-    stage('Prepare') {
-      steps {
-        echo 'Checking out source'
-        checkout scm
-      }
+    environment {
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
+        DOCKERHUB_REPO_BACKEND = 'avishi12/event-planner-backend'
+        DOCKERHUB_REPO_FRONTEND = 'avishi12/event-planner-frontend'
     }
 
-    stage('Install backend dependencies') {
-      steps {
-        dir('backend') {
-          sh 'npm ci'
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'main', url: 'https://github.com/avishi12/event_planner.git'
+            }
         }
-      }
+
+        stage('Build Backend') {
+            steps {
+                script {
+                    docker.build("${DOCKERHUB_REPO_BACKEND}:latest", "./backend")
+                }
+            }
+        }
+
+        stage('Build Frontend') {
+            steps {
+                script {
+                    docker.build("${DOCKERHUB_REPO_FRONTEND}:latest", "./my-react-app")
+                }
+            }
+        }
+
+        stage('Push Images') {
+            steps {
+                script {
+                    docker.withRegistry('https://registry.hub.docker.com', 'dockerhub-credentials') {
+                        docker.image("${DOCKERHUB_REPO_BACKEND}:latest").push()
+                        docker.image("${DOCKERHUB_REPO_FRONTEND}:latest").push()
+                    }
+                }
+            }
+        }
+
+        stage('Deploy Locally (Optional)') {
+            when {
+                branch 'main'
+            }
+            steps {
+                script {
+                    sh '''
+                        echo "Starting services with docker-compose..."
+                        docker compose -f docker-compose.yaml up -d
+                    '''
+                }
+            }
+        }
     }
 
-    stage('Run backend tests') {
-      steps {
-        dir('backend') {
-          // add your test command here if present
-          sh 'npm test || true'
-        }
-      }
-      post {
+    post {
         always {
-          junit allowEmptyResults: true, testResults: 'backend/test-results/**/*.xml'
+            sh 'docker system prune -f'
         }
-      }
-    }
-
-    stage('Install frontend dependencies & build') {
-      steps {
-        dir('my-react-app') {
-          sh 'npm ci'
-          sh 'npm run build'
-        }
-      }
-      post {
         success {
-          archiveArtifacts artifacts: 'my-react-app/build/**', fingerprint: true
+            echo 'Pipeline succeeded!'
         }
-      }
+        failure {
+            echo 'Pipeline failed!'
+        }
     }
-
-    stage('Build Docker images') {
-      steps {
-        // Use docker-compose to build images; ensure agent has docker and docker-compose installed
-        sh 'docker compose -f ${WORKSPACE}/docker-compose.yaml build --pull --no-cache'
-      }
-    }
-
-    stage('Deploy (optional)') {
-      when {
-        branch 'main'
-      }
-      steps {
-        sh 'docker compose -f ${WORKSPACE}/docker-compose.yaml up -d'
-      }
-    }
-  }
-
-  post {
-    always {
-      echo 'Pipeline finished'
-      // avoid running shell in post which may execute outside a node/workspace context
-    }
-    failure {
-      echo "Build failed: ${env.JOB_NAME} #${env.BUILD_NUMBER} -- see console: ${env.BUILD_URL}"
-    }
-  }
 }

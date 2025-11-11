@@ -1,41 +1,48 @@
 Jenkins pipeline for event_planner
 
-## Two Pipeline Options
+## Current Pipeline Approach (Docker Pipeline Plugin)
 
-### Option 1: NodeJS Tool (Jenkinsfile)
-Requirements for Jenkins agents:
-- **NodeJS Tool**: Install Node.js 18+ via Jenkins Global Tool Configuration
-  - Go to Jenkins → Manage Jenkins → Global Tool Configuration
-  - Add NodeJS installation (name it 'NodeJS' to match the Jenkinsfile)
-  - Select "Install automatically" or provide path to existing installation
-- Docker and docker-compose available on the agent (for image build and optional deploy)
-- Sufficient disk space for Docker images and npm caches
+This Jenkinsfile uses the **Docker Pipeline Plugin** which is more reliable than shell-based commands.
 
-### Option 2: Docker Agents (Jenkinsfile.docker)
-Requirements for Jenkins agents:
+### Requirements for Jenkins agents:
+- **Docker Pipeline Plugin** installed in Jenkins
 - Docker available on the Jenkins agent (Docker-in-Docker setup recommended)
-- Docker Pipeline plugin installed in Jenkins
-- No need to install Node.js separately (uses node:18-alpine containers)
+- **Jenkins Credentials**:
+  - Add Docker Hub credentials as 'dockerhub-credentials' (username/password type)
+  - Update `DOCKERHUB_REPO_BACKEND` and `DOCKERHUB_REPO_FRONTEND` in the Jenkinsfile to match your Docker Hub repositories
 
-## How it works
-1. Checkout repo
-2. Install backend dependencies and run tests (uses NodeJS tool or Docker agent)
-3. Install frontend dependencies and build (uses NodeJS tool or Docker agent, artifacts archived)
-4. Build Docker images using `docker compose build`
-5. If the branch is `main`, `docker compose up -d` will run (optional)
+### How it works:
+1. Checkout repo from GitHub
+2. Build backend Docker image using `./backend` context
+3. Build frontend Docker image using `./my-react-app` context
+4. Push both images to Docker Hub
+5. Optionally deploy locally using docker-compose (only on main branch)
 
-## Setup Instructions
+### Setup Instructions:
 
-### For Option 1 (NodeJS Tool):
-1. Install NodeJS tool in Jenkins Global Tool Configuration
-2. Ensure Docker is available on Jenkins agents
-3. Use `Jenkinsfile`
+1. **Install Docker Pipeline Plugin** in Jenkins
+2. **Configure Docker Hub Credentials**:
+   - Go to Jenkins → Credentials → System → Global credentials
+   - Add new credentials: Username/Password type
+   - ID: `dockerhub-credentials`
+   - Username: your Docker Hub username
+   - Password: your Docker Hub password or access token
 
-### For Option 2 (Docker Agents):
-1. Set up Docker-in-Docker or ensure Docker socket access
-2. Install Docker Pipeline plugin
-3. Rename `Jenkinsfile.docker` to `Jenkinsfile` or configure Jenkins to use it
+3. **Create Docker Hub Repositories**:
+   - `avishi12/event-planner-backend`
+   - `avishi12/event-planner-frontend`
+   - (Update the repo names in Jenkinsfile if different)
 
-## Notes
-- The Jenkinsfile assumes `docker` and `docker compose` are available to the Jenkins agent. For shell agents running inside Docker, use the Docker-in-Docker pattern or a dedicated agent with Docker.
-- You may want to add caching (npm cache) or use specific build agents for speed and security.
+4. **Ensure Docker Access**:
+   - Jenkins agent must have access to Docker daemon
+   - For Docker-in-Docker: mount `/var/run/docker.sock` or use dind
+
+### Alternative Files:
+- `Jenkinsfile.docker` - Uses Docker agents for Node.js operations (if you prefer npm-based builds)
+- Original `Jenkinsfile` backup available in git history
+
+### Notes:
+- This approach builds Docker images directly without running npm commands on the Jenkins agent
+- Dependencies are installed inside the Docker build process
+- Much more reliable than shell-based npm commands
+- Automatic cleanup with `docker system prune`
