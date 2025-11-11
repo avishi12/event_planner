@@ -2,11 +2,23 @@ pipeline {
     agent any
 
     environment {
-        DOCKERHUB_REPO_BACKEND = 'avishi12/event-planner-backend'
-        DOCKERHUB_REPO_FRONTEND = 'avishi12/event-planner-frontend'
+        DOCKERHUB_REPO_BACKEND = 'eg244991/event-planner-backend'
+        DOCKERHUB_REPO_FRONTEND = 'eg244991/event-planner-frontend'
     }
 
     stages {
+        stage('Preflight: Docker access') {
+            steps {
+                sh '''
+                    echo "Checking Docker access..."
+                    whoami
+                    id
+                    docker version || true
+                    docker info | head -n 20 || true
+                '''
+            }
+        }
+
         stage('Checkout') {
             steps {
                 git branch: 'main', url: 'https://github.com/avishi12/event_planner.git'
