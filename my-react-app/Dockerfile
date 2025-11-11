@@ -3,7 +3,10 @@ WORKDIR /app
 
 # Install dependencies first (package.json should be copied separately to use cache)
 COPY package.json package-lock.json* ./
-RUN npm install --silent
+# Install build tools required by some native npm modules on Alpine
+RUN apk add --no-cache g++ make python3 && \
+	npm install --silent && \
+	apk del make g++
 
 # Copy source
 COPY . .
