@@ -20,22 +20,28 @@ This Jenkinsfile uses the **Docker Pipeline Plugin** which is more reliable than
 
 ### Setup Instructions:
 
-1. **Install Docker Pipeline Plugin** in Jenkins
+1. **Install Docker Pipeline Plugin** in Jenkins (if not already installed)
+
 2. **Configure Docker Hub Credentials**:
    - Go to Jenkins → Credentials → System → Global credentials
-   - Add new credentials: Username/Password type
-   - ID: `dockerhub-credentials`
-   - Username: your Docker Hub username
-   - Password: your Docker Hub password or access token
+   - Add new credentials: **Username/Password** type
+   - **ID**: `dockerhub-credentials` (must match exactly)
+   - **Username**: your Docker Hub username
+   - **Password**: your Docker Hub password or access token
 
-3. **Create Docker Hub Repositories**:
+3. **Create Docker Hub Repositories** (if not already created):
    - `avishi12/event-planner-backend`
    - `avishi12/event-planner-frontend`
-   - (Update the repo names in Jenkinsfile if different)
+   - Make them public or private as needed
 
 4. **Ensure Docker Access**:
    - Jenkins agent must have access to Docker daemon
    - For Docker-in-Docker: mount `/var/run/docker.sock` or use dind
+
+### Credentials Setup Details:
+- The pipeline uses `withCredentials()` to securely access Docker Hub credentials
+- If credentials are missing, the pipeline will fail at the "Push Images" stage
+- Make sure the credential ID is exactly `dockerhub-credentials`
 
 ### Alternative Files:
 - `Jenkinsfile.docker` - Uses Docker agents for Node.js operations (if you prefer npm-based builds)

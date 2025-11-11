@@ -2,7 +2,6 @@ pipeline {
     agent any
 
     environment {
-        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
         DOCKERHUB_REPO_BACKEND = 'avishi12/event-planner-backend'
         DOCKERHUB_REPO_FRONTEND = 'avishi12/event-planner-frontend'
     }
@@ -33,9 +32,12 @@ pipeline {
         stage('Push Images') {
             steps {
                 script {
-                    docker.withRegistry('https://registry.hub.docker.com', 'dockerhub-credentials') {
-                        docker.image("${DOCKERHUB_REPO_BACKEND}:latest").push()
-                        docker.image("${DOCKERHUB_REPO_FRONTEND}:latest").push()
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                        sh '''
+                            echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
+                            docker push ${DOCKERHUB_REPO_BACKEND}:latest
+                            docker push ${DOCKERHUB_REPO_FRONTEND}:latest
+                        '''
                     }
                 }
             }
@@ -57,9 +59,6 @@ pipeline {
     }
 
     post {
-        always {
-            sh 'docker system prune -f'
-        }
         success {
             echo 'Pipeline succeeded!'
         }
