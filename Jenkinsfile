@@ -1,12 +1,6 @@
 pipeline {
   agent any
 
-  environment {
-    // adjust these if your Jenkins agents use different tool names
-    NODE_HOME = tool name: 'NodeJS 18', type: 'nodejs'
-    PATH = "${env.NODE_HOME}/bin:${env.PATH}"
-  }
-
   stages {
     stage('Prepare') {
       steps {
@@ -71,10 +65,10 @@ pipeline {
   post {
     always {
       echo 'Pipeline finished'
-      sh 'docker images || true'
+      // avoid running shell in post which may execute outside a node/workspace context
     }
     failure {
-      mail to: 'dev-team@example.com', subject: "Jenkins: Build failed - ${env.JOB_NAME} #${env.BUILD_NUMBER}", body: "Check console output: ${env.BUILD_URL}"
+      echo "Build failed: ${env.JOB_NAME} #${env.BUILD_NUMBER} -- see console: ${env.BUILD_URL}"
     }
   }
 }
