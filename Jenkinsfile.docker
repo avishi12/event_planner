@@ -1,10 +1,6 @@
 pipeline {
   agent any
 
-  tools {
-    nodejs 'NodeJS'  // Adjust this name to match your Jenkins NodeJS tool installation
-  }
-
   stages {
     stage('Prepare') {
       steps {
@@ -14,6 +10,12 @@ pipeline {
     }
 
     stage('Install backend dependencies') {
+      agent {
+        docker {
+          image 'node:18-alpine'
+          reuseNode true
+        }
+      }
       steps {
         dir('backend') {
           sh 'npm ci'
@@ -22,6 +24,12 @@ pipeline {
     }
 
     stage('Run backend tests') {
+      agent {
+        docker {
+          image 'node:18-alpine'
+          reuseNode true
+        }
+      }
       steps {
         dir('backend') {
           // add your test command here if present
@@ -36,6 +44,12 @@ pipeline {
     }
 
     stage('Install frontend dependencies & build') {
+      agent {
+        docker {
+          image 'node:18-alpine'
+          reuseNode true
+        }
+      }
       steps {
         dir('my-react-app') {
           sh 'npm ci'
