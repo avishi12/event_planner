@@ -3,7 +3,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  background: linear-gradient(to right, #3b82f6, #9333ea);
+  background: linear-gradient(to right, #fc8653, #f1e14f);
 }
 
 /* Box */
@@ -35,7 +35,7 @@
 }
 
 .signup-box input:focus {
-  border-bottom: 2px solid #3b82f6;
+  border-bottom: 2px solid #f46d47;
 }
 
 /* Forgot password */

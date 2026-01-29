@@ -1,0 +1,114 @@
+.about {
+  font-family: "Poppins", sans-serif;
+}
+
+/* Hero */
+.about-hero {
+  background: linear-gradient(
+      rgba(255, 140, 0, 0.7),
+      rgba(255, 140, 0, 0.7)
+    ),
+    url("https://images.unsplash.com/photo-1500530855697-b586d89ba3ee");
+  background-size: cover;
+  background-position: center;
+  color: white;
+  text-align: center;
+  padding: 90px 20px;
+}
+
+.about-hero h1 {
+  font-size: 3rem;
+}
+
+.about-hero span {
+  color: #ffd699;
+}
+
+.about-hero p {
+  margin-top: 15px;
+  font-size: 1.2rem;
+}
+
+/* Content */
+.about-content {
+  display: flex;
+  gap: 40px;
+  padding: 60px 40px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.about-text {
+  max-width: 500px;
+}
+
+.about-text h2 {
+  color: #ff8c00;
+  margin-bottom: 20px;
+}
+
+.about-text p {
+  color: #555;
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
+
+.about-btn {
+  background-color: #ff8c00;
+  color: white;
+  border: none;
+  padding: 12px 28px;
+  font-size: 1rem;
+  border-radius: 30px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.about-btn:hover {
+  background-color: #e67600;
+}
+
+/* Image */
+.about-image img {
+  width: 380px;
+  border-radius: 20px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Values */
+.values {
+  background-color: #fff7ed;
+  padding: 60px 40px;
+  text-align: center;
+}
+
+.values h2 {
+  color: #ff8c00;
+  font-size: 2.5rem;
+  margin-bottom: 40px;
+}
+
+.value-cards {
+  display: flex;
+  gap: 30px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.value-card {
+  background: white;
+  width: 280px;
+  padding: 25px;
+  border-radius: 15px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.value-card h3 {
+  color: #ff8c00;
+  margin-bottom: 10px;
+}
+
+.value-card p {
+  color: #555;
+}
