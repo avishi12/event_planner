@@ -25,10 +25,20 @@ pipeline {
       }
     }
 
+    stage('Compute Image Tag') {
+      steps {
+        script {
+          env.IMAGE_TAG = sh(script: 'git rev-parse --short=12 HEAD', returnStdout: true).trim()
+          echo "Using IMAGE_TAG=${env.IMAGE_TAG}"
+        }
+      }
+    }
+
     stage('Build Backend Image') {
       steps {
         script {
-          docker.build("${DOCKERHUB_REPO_BACKEND}:latest", "./backend")
+          def backendImage = docker.build("${DOCKERHUB_REPO_BACKEND}:${env.IMAGE_TAG}", "./backend")
+          backendImage.tag('latest')
         }
       }
     }
@@ -36,7 +46,8 @@ pipeline {
     stage('Build Frontend Image') {
       steps {
         script {
-          docker.build("${DOCKERHUB_REPO_FRONTEND}:latest", "./my-react-app")
+          def frontendImage = docker.build("${DOCKERHUB_REPO_FRONTEND}:${env.IMAGE_TAG}", "./my-react-app")
+          frontendImage.tag('latest')
         }
       }
     }
@@ -48,6 +59,8 @@ pipeline {
                                           passwordVariable: 'DOCKER_PASSWORD')]) {
           sh '''
             echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+            docker push ${DOCKERHUB_REPO_BACKEND}:${IMAGE_TAG}
+            docker push ${DOCKERHUB_REPO_FRONTEND}:${IMAGE_TAG}
             docker push ${DOCKERHUB_REPO_BACKEND}:latest
             docker push ${DOCKERHUB_REPO_FRONTEND}:latest
           '''

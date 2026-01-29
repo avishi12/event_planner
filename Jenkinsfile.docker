@@ -18,7 +18,7 @@ pipeline {
       }
       steps {
         dir('backend') {
-          sh 'npm ci'
+          sh 'if [ -f package-lock.json ]; then npm ci; else npm install; fi'
         }
       }
     }
@@ -52,7 +52,7 @@ pipeline {
       }
       steps {
         dir('my-react-app') {
-          sh 'npm ci'
+          sh 'if [ -f package-lock.json ]; then npm ci; else npm install; fi'
           sh 'npm run build'
         }
       }

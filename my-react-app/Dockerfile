@@ -1,9 +1,17 @@
+# syntax=docker/dockerfile:1.5
+
 # Build stage
 FROM node:18-alpine AS build
 WORKDIR /app
 
+RUN npm config set fetch-retries 5 \
+  && npm config set fetch-retry-mintimeout 20000 \
+  && npm config set fetch-retry-maxtimeout 120000 \
+  && npm config set fetch-timeout 600000
+
 COPY package*.json ./
-RUN if [ -f package-lock.json ]; then npm ci --no-audit --no-fund; else npm install --no-audit --no-fund; fi
+RUN --mount=type=cache,target=/root/.npm \
+  if [ -f package-lock.json ]; then npm ci --no-audit --no-fund; else npm install --no-audit --no-fund; fi
 
 COPY . .
 ARG REACT_APP_API_URL=/api
