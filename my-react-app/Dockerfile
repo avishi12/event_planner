@@ -3,7 +3,7 @@ FROM node:18-alpine AS build
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci
+RUN if [ -f package-lock.json ]; then npm ci --no-audit --no-fund; else npm install --no-audit --no-fund; fi
 
 COPY . .
 ARG REACT_APP_API_URL=/api
