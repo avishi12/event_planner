@@ -12,7 +12,7 @@ function Signup() {
     e.preventDefault();
 
     try {
-      const response = await axios.post("/api/auth/signup", {
+      const response = await axios.post("http://localhost:4000/api/auth/signup", {
         name,
         email,
         password,
