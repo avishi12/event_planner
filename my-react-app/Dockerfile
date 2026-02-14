@@ -1,17 +1,11 @@
-# syntax=docker/dockerfile:1.5
-
 # Build stage
 FROM node:18-alpine AS build
 WORKDIR /app
 
 COPY .npmrc package*.json ./
-RUN --mount=type=cache,target=/root/.npm \
-  if [ -f package-lock.json ]; then npm ci --no-audit --no-fund; else npm install --no-audit --no-fund; fi
+RUN if [ -f package-lock.json ]; then npm ci --no-audit --no-fund; else npm install --no-audit --no-fund; fi
 
 COPY . .
-ARG REACT_APP_API_URL=/api
-ENV REACT_APP_API_URL=$REACT_APP_API_URL
-
 RUN npm run build
 
 # Run stage (nginx serves static build)
