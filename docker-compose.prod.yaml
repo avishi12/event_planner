@@ -1,4 +1,12 @@
 services:
+  mongo:
+    image: mongo:7.0
+    container_name: mongo_c
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
   frontend:
     image: ${DOCKERHUB_REPO_FRONTEND:-eg244991/event-planner-frontend}:${IMAGE_TAG:-latest}
     container_name: frontend_c
@@ -11,5 +19,10 @@ services:
     ports:
       - "4000:4000"
     environment:
-      - MONGO_URI=${MONGO_URI:-mongodb://localhost:27017/devops}
+      - MONGO_URI=${MONGO_URI:-mongodb://mongo:27017/devops}
       - JWT_SECRET=${JWT_SECRET:-change-me}
+    depends_on:
+      - mongo
+
+volumes:
+  mongo_data:

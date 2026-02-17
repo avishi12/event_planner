@@ -41,6 +41,15 @@ cd /home/ec2-user/event-planner-deploy
 echo "Creating docker-compose.prod.yaml..."
 cat > docker-compose.prod.yaml <<'EOF'
 services:
+  mongo:
+    image: mongo:7.0
+    container_name: mongo_c
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    restart: unless-stopped
+
   frontend:
     image: eg244991/event-planner-frontend:latest
     container_name: frontend_c
@@ -54,9 +63,14 @@ services:
     ports:
       - "4000:4000"
     environment:
-      - MONGO_URI=mongodb://localhost:27017/devops
+      - MONGO_URI=mongodb://mongo:27017/devops
       - JWT_SECRET=production_jwt_secret_change_me
     restart: unless-stopped
+    depends_on:
+      - mongo
+
+volumes:
+  mongo_data:
 EOF
 
 # Set proper ownership
