@@ -8,21 +8,12 @@ pipeline {
     environment {
         DOCKERHUB_REPO_FRONTEND = 'eg244991/event-planner-frontend'
         DOCKERHUB_REPO_BACKEND = 'eg244991/event-planner-backend'
-        APP_SERVER_IP = '13.50.187.25'  // Update this after terraform apply
+        APP_SERVER_IP = '13.50.187.25'
         APP_SERVER_USER = 'ec2-user'
         DEPLOY_DIR = '/home/ec2-user/event-planner-deploy'
     }
     
     stages {
-        stage('Check Docker Access') {
-            steps {
-                script {
-                    echo "Checking Docker access..."
-                    sh 'docker ps'
-                }
-            }
-        }
-        
         stage('Checkout') {
             steps {
                 echo "Checking out code from GitHub..."
@@ -30,70 +21,19 @@ pipeline {
             }
         }
         
-        stage('Compute Image Tag') {
+        stage('Deploy to App Server') {
             steps {
                 script {
-                    def gitCommit = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim()
-                    def buildNumber = env.BUILD_NUMBER
-                    env.IMAGE_TAG = "${gitCommit}-${buildNumber}"
-                    echo "Image tag: ${env.IMAGE_TAG}"
-                }
-            }
-        }
-        
-        stage('Build Backend') {
-            steps {
-                dir('backend') {
-                    echo "Building backend Docker image..."
-                    sh "docker build -t ${DOCKERHUB_REPO_BACKEND}:${IMAGE_TAG} ."
-                    sh "docker tag ${DOCKERHUB_REPO_BACKEND}:${IMAGE_TAG} ${DOCKERHUB_REPO_BACKEND}:latest"
-                }
-            }
-        }
-        
-        stage('Build Frontend') {
-            steps {
-                dir('my-react-app') {
-                    echo "Building frontend Docker image..."
-                    sh "docker build -t ${DOCKERHUB_REPO_FRONTEND}:${IMAGE_TAG} ."
-                    sh "docker tag ${DOCKERHUB_REPO_FRONTEND}:${IMAGE_TAG} ${DOCKERHUB_REPO_FRONTEND}:latest"
-                }
-            }
-        }
-        
-        stage('Push to DockerHub') {
-            steps {
-                script {
-                    echo "Pushing images to DockerHub..."
-                    withCredentials([usernamePassword(
-                        credentialsId: 'dockerhub-credentials',
-                        usernameVariable: 'DOCKERHUB_USER',
-                        passwordVariable: 'DOCKERHUB_PASS'
-                    )]) {
-                        sh 'echo $DOCKERHUB_PASS | docker login -u $DOCKERHUB_USER --password-stdin'
-                        
-                        // Push backend
-                        sh "docker push ${DOCKERHUB_REPO_BACKEND}:${IMAGE_TAG}"
-                        sh "docker push ${DOCKERHUB_REPO_BACKEND}:latest"
-                        
-                        // Push frontend
-                        sh "docker push ${DOCKERHUB_REPO_FRONTEND}:${IMAGE_TAG}"
-                        sh "docker push ${DOCKERHUB_REPO_FRONTEND}:latest"
-                    }
-                }
-            }
-        }
-        
-        stage('Deploy Locally') {
-            steps {
-                script {
-                    echo "Deploying application to App Server..."
+                    echo "🚀 Pulling latest images and deploying to App Server..."
                     sshagent(credentials: ['app-server-ssh-key']) {
                         sh """
                             ssh -o StrictHostKeyChecking=no ${APP_SERVER_USER}@${APP_SERVER_IP} '
                                 cd ${DEPLOY_DIR}
+                                echo "Pulling latest images from DockerHub..."
                                 docker-compose -f docker-compose.prod.yaml pull
+                                echo "Restarting containers with new images..."
                                 docker-compose -f docker-compose.prod.yaml up -d
+                                echo "Deployment complete!"
                             '
                         """
                     }
@@ -129,10 +69,6 @@ pipeline {
         }
         failure {
             echo "❌ Pipeline failed!"
-        }
-        always {
-            echo "Cleaning up old Docker images..."
-            sh 'docker image prune -f || true'
         }
     }
 }
