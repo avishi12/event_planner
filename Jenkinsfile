@@ -1,9 +1,15 @@
 pipeline {
   agent any
 
+  triggers {
+    pollSCM('H/2 * * * *')  // Poll GitHub every 2 minutes
+  }
+
   environment {
     DOCKERHUB_REPO_BACKEND  = "eg244991/event-planner-backend"
     DOCKERHUB_REPO_FRONTEND = "eg244991/event-planner-frontend"
+    AWS_EC2_IP = "13.60.53.191"  // TODO: Update with your EC2 IP
+    AWS_EC2_USER = "ec2-user"
   }
 
   stages {
@@ -77,10 +83,48 @@ pipeline {
         '''
       }
     }
+
+    stage('Deploy to AWS') {
+      when { branch 'main' }
+      steps {
+        script {
+          echo "Deploying to AWS EC2: ${AWS_EC2_IP}"
+          
+          sshagent(['aws-ec2-ssh-key']) {
+            sh '''
+              ssh -o StrictHostKeyChecking=no ${AWS_EC2_USER}@${AWS_EC2_IP} << 'EOF'
+                echo "Connected to AWS EC2 instance"
+                
+                # Navigate to deployment directory
+                cd /home/ec2-user/event-planner-deploy
+                
+                # Pull latest images from DockerHub
+                echo "Pulling latest Docker images..."
+                docker-compose -f docker-compose.prod.yaml pull
+                
+                # Recreate containers with new images
+                echo "Restarting containers with new images..."
+                docker-compose -f docker-compose.prod.yaml up -d --force-recreate
+                
+                # Check container status
+                echo "Container status:"
+                docker ps
+                
+                echo "Deployment to AWS completed successfully!"
+EOF
+            '''
+          }
+        }
+      }
+    }
   }
 
   post {
-    success { echo "Pipeline succeeded!" }
+    success { 
+      echo "Pipeline succeeded!" 
+      echo "Frontend URL: http://${AWS_EC2_IP}:3000"
+      echo "Backend URL: http://${AWS_EC2_IP}:4000"
+    }
     failure { echo "Pipeline failed!" }
   }
 }

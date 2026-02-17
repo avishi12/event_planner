@@ -11,16 +11,5 @@ services:
     ports:
       - "4000:4000"
     environment:
-      - MONGO_URI=${MONGO_URI:-mongodb://mongo:27017/devops}
+      - MONGO_URI=${MONGO_URI:-mongodb://localhost:27017/devops}
       - JWT_SECRET=${JWT_SECRET:-change-me}
-    depends_on:
-      - mongo
-
-  mongo:
-    image: mongo:latest
-    container_name: mongo_c
-    volumes:
-      - mongo-data:/data/db
-
-volumes:
-  mongo-data:

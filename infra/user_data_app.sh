@@ -5,7 +5,7 @@ set -e
 exec > >(tee /var/log/user-data.log)
 exec 2>&1
 
-echo "Starting EC2 initialization script..."
+echo "Starting App Server initialization..."
 
 # Update system packages
 echo "Updating system packages..."
@@ -26,61 +26,18 @@ curl -L "https://github.com/docker/compose/releases/latest/download/docker-compo
 chmod +x /usr/local/bin/docker-compose
 ln -sf /usr/local/bin/docker-compose /usr/bin/docker-compose
 
-# Install Java for Jenkins
-echo "Installing Java 17 for Jenkins..."
-dnf install -y java-17-amazon-corretto-headless
-
-# Install Jenkins
-echo "Installing Jenkins..."
-curl -o /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat-stable/jenkins.repo || {
-    echo "Repo download failed, creating manually..."
-    cat > /etc/yum.repos.d/jenkins.repo <<'JENKINSREPO'
-[jenkins]
-name=Jenkins-stable
-baseurl=https://pkg.jenkins.io/redhat-stable
-gpgcheck=1
-gpgkey=https://pkg.jenkins.io/redhat-stable/jenkins.io-2023.key
-JENKINSREPO
-}
-rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io-2023.key
-dnf install -y jenkins
-
-# Add jenkins user to docker group
-usermod -aG docker jenkins
-
-# Start Jenkins
-systemctl start jenkins
-systemctl enable jenkins
-
-# Install Git (needed for Jenkins)
-echo "Installing Git..."
-dnf install -y git
-
-# Wait for Jenkins to fully start before continuing
-echo "Waiting for Jenkins to start..."
-sleep 60
-while ! systemctl is-active --quiet jenkins; do
-    echo "Jenkins not ready yet, waiting..."
-    sleep 10
-done
-echo "Jenkins is running!"
-
 # Verify installations
 echo "Docker version:"
 docker --version
 echo "Docker Compose version:"
 docker-compose --version
-echo "Java version:"
-java -version
-echo "Jenkins status:"
-systemctl status jenkins --no-pager
 
 # Create deployment directory
 echo "Creating deployment directory..."
 mkdir -p /home/ec2-user/event-planner-deploy
 cd /home/ec2-user/event-planner-deploy
 
-# Create docker-compose.prod.yaml (without mongo - use MongoDB Atlas instead)
+# Create docker-compose.prod.yaml (without mongo)
 echo "Creating docker-compose.prod.yaml..."
 cat > docker-compose.prod.yaml <<'EOF'
 services:
@@ -105,25 +62,13 @@ EOF
 # Set proper ownership
 chown -R ec2-user:ec2-user /home/ec2-user/event-planner-deploy
 
-# Create startup script for auto-deployment
-echo "Creating startup script..."
-cat > /home/ec2-user/start-event-planner.sh <<'EOF'
-#!/bin/bash
-cd /home/ec2-user/event-planner-deploy
-docker-compose -f docker-compose.prod.yaml pull
-docker-compose -f docker-compose.prod.yaml up -d
-EOF
-
-chmod +x /home/ec2-user/start-event-planner.sh
-chown ec2-user:ec2-user /home/ec2-user/start-event-planner.sh
-
 # Pull images and start containers
 echo "Pulling Docker images and starting containers..."
 cd /home/ec2-user/event-planner-deploy
 docker-compose -f docker-compose.prod.yaml pull
 docker-compose -f docker-compose.prod.yaml up -d
 
-# Wait for containers to be healthy
+# Wait for containers to start
 echo "Waiting for containers to start..."
 sleep 10
 
@@ -131,21 +76,12 @@ sleep 10
 echo "Container status:"
 docker ps
 
-# Get Jenkins initial admin password
-echo "Waiting for Jenkins to generate initial password..."
-sleep 30
-JENKINS_PASSWORD=$(cat /var/lib/jenkins/secrets/initialAdminPassword 2>/dev/null || echo "Not ready yet - check in 1-2 minutes")
-
 echo "========================================="
-echo "EC2 initialization complete!"
+echo "App Server initialization complete!"
 echo "========================================="
 echo ""
 echo "Application URLs:"
 echo "  Frontend: http://$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4):3000"
 echo "  Backend:  http://$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4):4000"
-echo "  Jenkins:  http://$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4):8080"
-echo ""
-echo "Jenkins Initial Admin Password:"
-echo "  $JENKINS_PASSWORD"
 echo ""
 echo "========================================="
