@@ -8,7 +8,7 @@ pipeline {
     environment {
         DOCKERHUB_REPO_FRONTEND = 'eg244991/event-planner-frontend'
         DOCKERHUB_REPO_BACKEND = 'eg244991/event-planner-backend'
-        APP_SERVER_IP = 'YOUR_APP_SERVER_IP'  // Update this after terraform apply
+        APP_SERVER_IP = '13.50.187.25'  // Update this after terraform apply
         APP_SERVER_USER = 'ec2-user'
         DEPLOY_DIR = '/home/ec2-user/event-planner-deploy'
     }
