@@ -7,7 +7,7 @@ function Navbar() {
   return (
     <nav className="navbar">
       <div className="navbar-logo">
-        <Link to="/">Deshabandu Thennnn</Link>
+        <Link to="/">Happy Events</Link>
       </div>
       <div className="navbar-links">
         <Link to="/Home">Home</Link>
