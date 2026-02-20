@@ -7,7 +7,7 @@ function Navbar() {
   return (
     <nav className="navbar">
       <div className="navbar-logo">
-        <Link to="/">Shine Events</Link>
+        <Link to="/">Avishi Deshabandu</Link>
       </div>
       <div className="navbar-links">
         <Link to="/Home">Home</Link>
